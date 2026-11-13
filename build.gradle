@@ -1,0 +1,68 @@
+// Standalone plugin build; shared workspace tooling is optional for development.
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url = 'https://repo.runelite.net'
+        content {
+            includeGroupByRegex("net\\.runelite.*")
+        }
+    }
+    mavenCentral()
+}
+
+// Match RuneLite's official example and the existing working IRL XP launcher.
+def runeLiteVersion = 'latest.release'
+dependencies {
+    implementation 'com.google.re2j:re2j:1.8'
+    compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
+    testImplementation group: 'net.runelite', name: 'client', version: runeLiteVersion
+    testImplementation group: 'net.runelite', name: 'jshell', version: runeLiteVersion
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+    testImplementation 'org.mockito:mockito-inline:4.11.0'
+}
+
+group = 'com.lastrites'
+// Use Java Properties rather than inferring metadata from file text.
+def pluginProperties = new Properties()
+file('runelite-plugin.properties').withInputStream { pluginProperties.load(it) }
+version = pluginProperties.getProperty('version')
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(11)
+}
+
+// The development launcher belongs to test sources, outside the production JAR.
+tasks.register('run', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.lastrites.LastRitesLauncher'
+    jvmArgs '-ea'
+    if (System.getProperty('os.name').toLowerCase().contains('mac')
+        && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17))
+    {
+        // Required by the working client's macOS fullscreen integration.
+        jvmArgs '--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED'
+    }
+    args '--developer-mode', '--debug'
+}
+
+// Unit tests use isolated data and intercept HTTP; no live reports are submitted.
+test {
+    useJUnitPlatform()
+    // Match IRL XP's Mockito compatibility setting for this Mac's JDK 21.
+    jvmArgs '-Dnet.bytebuddy.experimental=true'
+}
+
+// RuneLite's developer-mode sideload loader accepts one JAR. Bundle only this
+// plugin's runtime dependency (RE2/J); RuneLite itself remains compileOnly.
+tasks.register('sideloadJar', Jar) {
+    archiveClassifier = 'sideload'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from sourceSets.main.output
+    dependsOn configurations.runtimeClasspath
+    from { configurations.runtimeClasspath.collect { zipTree(it) } }
+}

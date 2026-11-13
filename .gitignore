@@ -1,0 +1,17 @@
+# Local build state and machine-specific workspace links stay out of Git.
+.gradle/
+.gradle-user-home
+build/
+bin/
+out/
+.idea/
+.vscode/
+*.iml
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+.DS_Store
+*.log
+.env
+credentials.properties
+.venv*/

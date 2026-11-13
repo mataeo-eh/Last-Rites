@@ -138,6 +138,29 @@ class BugReportingTest
     }
 
     /** Test-only typed reflection exercises actual controls without widening production APIs. */
+    @Test
+    void reviewMakesConsentVisibleAndExplainsWhySendIsDisabled() throws Exception
+    {
+        SwingUtilities.invokeAndWait(() -> {
+            BugReportPanel panel = new BugReportPanel(true);
+            panel.load(report());
+            field(panel, "review", JButton.class).doClick();
+            JButton send = field(panel, "send", JButton.class);
+            JCheckBox consent = field(panel, "consent", JCheckBox.class);
+            assertFalse(send.isEnabled());
+            assertTrue(send.getToolTipText().contains(consent.getText()));
+            assertEquals(24, consent.getIcon().getIconWidth());
+            assertTrue(consent.isBorderPainted());
+            consent.doClick();
+            assertTrue(send.isEnabled());
+            assertFalse(send.getToolTipText().contains("Check the box"));
+            panel.setBusy(true);
+            assertFalse(send.isEnabled());
+            panel.setBusy(false);
+            assertTrue(send.isEnabled());
+        });
+    }
+
     static <T> T field(Object target, String name, Class<T> type)
     {
         try

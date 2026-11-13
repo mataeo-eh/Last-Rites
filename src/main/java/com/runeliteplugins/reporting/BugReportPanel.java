@@ -44,7 +44,7 @@ public final class BugReportPanel extends JPanel
     private final JButton edit = new JButton("Back to editing");
     private final JButton save = new JButton("Save draft");
     private final JButton discard = new JButton("Discard draft");
-    private final JCheckBox consent = new JCheckBox("Send this report to the developer's private inbox");
+    private final JCheckBox consent = new JCheckBox("I agree to send this report");
     private final CardLayout cards = new CardLayout();
     private final JPanel pages = new JPanel(cards);
     private final JScrollPane formScroll;
@@ -53,6 +53,7 @@ public final class BugReportPanel extends JPanel
     private BugReport current = BugReport.empty();
     private JsonObject selectedDiagnostics;
     private boolean dirty;
+    private boolean busy;
 
     public BugReportPanel(boolean configured)
     {
@@ -112,17 +113,31 @@ public final class BugReportPanel extends JPanel
 
         JPanel reviewPage = new JPanel(new BorderLayout(8, 8));
         reviewPage.setOpaque(false);
-        reviewPage.add(ReportUi.wrappingNote("This exact report goes through the shared plugin reporting service "
-            + "on Railway to the developer's private GitHub inbox. Railway processes your connection's IP address. "
-            + "No logs, screenshots, or game/account data are attached automatically. "
-            + "Sending saves a local recovery copy until acceptance.", 5), BorderLayout.NORTH);
+        reviewPage.add(ReportUi.wrappingNote("Only the report you review is sent. No logs, screenshots, "
+            + "or game/account data are attached automatically. "
+            + "A local recovery draft is kept until the report is accepted.", 3), BorderLayout.NORTH);
         preview.setEditable(false);
         ReportUi.styleField(preview);
         preview.setName("reportPreview");
         reviewPage.add(new JScrollPane(preview), BorderLayout.CENTER);
-        consent.setOpaque(false);
+        consent.setName("reportConsent");
+        consent.setIcon(new ReportConsentIcon(false));
+        consent.setSelectedIcon(new ReportConsentIcon(true));
+        consent.setIconTextGap(12);
+        consent.setOpaque(true);
+        consent.setBackground(new java.awt.Color(0x30281C));
         consent.setForeground(ReportUi.TEXT);
-        reviewPage.add(consent, BorderLayout.SOUTH);
+        consent.setFont(consent.getFont().deriveFont(java.awt.Font.BOLD, 14f));
+        consent.setBorderPainted(true);
+        consent.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new java.awt.Color(0xD9A441), 2),
+            BorderFactory.createEmptyBorder(12, 12, 12, 12)));
+        consent.getAccessibleContext().setAccessibleDescription("Required: check this box to enable Send report.");
+        JPanel confirmation = new JPanel(new BorderLayout(0, 6));
+        confirmation.setOpaque(false);
+        confirmation.add(consent, BorderLayout.CENTER);
+        confirmation.add(ReportUi.wrappingNote("Check the box above to enable Send report.", 1), BorderLayout.SOUTH);
+        reviewPage.add(confirmation, BorderLayout.SOUTH);
         pages.add(reviewPage, "review");
         add(pages, BorderLayout.CENTER);
 
@@ -142,7 +157,7 @@ public final class BugReportPanel extends JPanel
         add(footer, BorderLayout.SOUTH);
         review.addActionListener(event -> showReview());
         edit.addActionListener(event -> showEditor());
-        consent.addActionListener(event -> send.setEnabled(configured && consent.isSelected()));
+        consent.addActionListener(event -> updateSendState());
         details.addActionListener(event ->
         {
             selectedDiagnostics = details.isSelected() ? BugReport.collectDiagnostics() : null;
@@ -260,8 +275,8 @@ public final class BugReportPanel extends JPanel
             review.setVisible(false);
             edit.setVisible(true);
             send.setVisible(true);
-            send.setEnabled(false);
-            status(configured ? "Review the report, then confirm below to send it."
+            updateSendState();
+            status(configured ? "Check the highlighted confirmation box to enable Send report."
                 : "Reporting is not available yet. You can save a local draft.");
         }
         catch (IllegalArgumentException ex)
@@ -284,12 +299,26 @@ public final class BugReportPanel extends JPanel
 
     public void setBusy(boolean busy)
     {
+        this.busy = busy;
         for (JComponent control : new JComponent[]{title, category, description, steps, expected,
             details, review, edit, save, discard, consent})
         {
             control.setEnabled(!busy);
         }
-        send.setEnabled(!busy && configured && consent.isSelected());
+        updateSendState();
+    }
+
+    /** ToolTipManager also handles disabled Swing buttons, so explain the missing step there. */
+    private void updateSendState()
+    {
+        boolean enabled = !busy && configured && consent.isSelected();
+        send.setEnabled(enabled);
+        send.setBackground(new java.awt.Color(enabled ? 0xD9A441 : 0x33363C));
+        send.setForeground(new java.awt.Color(enabled ? 0x18130B : 0xA5A9AF));
+        send.setToolTipText(busy ? "Please wait for the current operation to finish."
+            : !configured ? "Reporting is not available yet."
+            : !consent.isSelected() ? "Check the box labelled \"I agree to send this report\" to enable Send report."
+            : "Send the report you reviewed.");
     }
 
     public void status(String message) { status.setText(message); }

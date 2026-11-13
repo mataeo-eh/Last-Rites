@@ -43,3 +43,8 @@ scaffolding only; this repository's ordinary Gradle build does not invoke it.
 
 No live report was sent during development. Tests intercept transport locally;
 the real receiver was checked through read-only `/healthz`.
+
+The review screen keeps a short attachment/privacy note. A high-contrast consent
+box and disabled-button tooltip explain the final confirmation step. Confirmed
+acceptance closes the report window after recovery-copy cleanup; errors keep the
+window and draft available. Both IRL XP and the portable package use this flow.

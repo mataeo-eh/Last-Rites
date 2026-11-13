@@ -32,13 +32,15 @@ public final class DeathNotice
         return total.endsWith("K") || total.endsWith("k");
     }
 
-    String totalLabel()
+    String totalLabel(boolean fullTotals)
     {
-        if (hiscoreTotal != null)
-        {
-            return "Total " + hiscoreTotal + " (HiScores; broadcast " + total + ")";
-        }
-        return "Total " + total + (hasAbbreviatedTotal() ? " (approx.)" : "");
+        return total + (fullTotals && hasAbbreviatedTotal() && hiscoreTotal != null ? " - " + hiscoreTotal : "");
+    }
+
+    String playerLabel(boolean fullTotals)
+    {
+        return player + " (" + total + ")"
+            + (fullTotals && hasAbbreviatedTotal() && hiscoreTotal != null ? " - " + hiscoreTotal : "");
     }
 
     /** Stable filter fields avoid depending on the visual layout or English sentence order. */

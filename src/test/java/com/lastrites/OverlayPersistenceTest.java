@@ -35,12 +35,15 @@ class OverlayPersistenceTest
         OverlayManager original = manager(config);
         original.add(first);
         first.setPreferredLocation(new Point(190, 240));
+        first.setPreferredSize(new java.awt.Dimension(280, 360));
         original.saveOverlay(first);
         original.remove(first);
         LastRitesOverlay reopened = new LastRitesOverlay(null, new NoticeQueue(), settings);
         OverlayManager recreated = manager(config);
         recreated.add(reopened);
         assertEquals(new Point(190, 240), reopened.getPreferredLocation());
+        assertEquals(new java.awt.Dimension(280, 360), reopened.getPreferredSize());
+        assertTrue(reopened.isResizable());
         assertTrue(reopened.isMovable());
     }
 

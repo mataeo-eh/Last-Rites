@@ -23,9 +23,11 @@ RE2 exclusions. `NoticeQueue` synchronizes the bounded display queue and history
 `LastRitesOverlay` paints the card and delegates position persistence to RuneLite.
 `LastRitesPanel` exposes preview, filters, history, and the portable reporting UI.
 
-The queue holds 25 pending deaths and 50 session history records, never written
-to disk. At capacity, oldest pending events are dropped in favour of recent ones.
-Pop-ups expire after the configured 2–30 seconds. History remains until shutdown.
+The display stores 50 session history records, never written to disk. New deaths
+appear immediately and restart the timed view; scrolling browses the same history.
+The timer defaults to 7 seconds, permits 0 for persistent display, and is separate
+from manual pin/hide. A manually hidden popup stays hidden on live events; a
+sample overrides that without changing the saved preference. History remains until shutdown.
 
 ## Exact API contracts
 
@@ -71,7 +73,7 @@ One result is awaited at a time, with at most one new start each second and 25
 pending names. The future timeout ends waiting; RuneLite does not expose the HTTP
 Call for cancellation, so timed-out transport may still finish in the background.
 Only abbreviated broadcast totals trigger lookups. The returned number is
-labelled HiScores, with the original abbreviation retained. A later profile
+shown after the original abbreviation, for example `(1K) - 1075`. A later profile
 reset cannot be distinguished reliably from the death-time character using this
 API, so this is a full published total, not proof of an exact death-time total.
 
@@ -79,12 +81,13 @@ API, so this is a full published total, not proof of an exact death-time total.
 
 1. Validate newly encountered live server fixtures; expand the strict parser only
    with evidence. A future structured RuneLite death event should replace it.
-2. Validate visual placement at fixed/resizable sizes and UI scaling, including
-   closing/reopening the client after Alt-dragging.
+2. Have live testers validate fixed/resizable sizes and UI scaling. Manager
+   recreation tests cover saved position and size; wheel-event tests cover history
+   browsing, precise trackpad rotation, and leaving camera scrolling untouched outside the popup.
 3. Observe service update/reset behaviour before making stronger death-time
    precision claims. Preserve the source labels even if a lookup succeeds.
-4. Add the repository-specific Plugin Hub submission/release workflow and review
-   external dependency/network disclosures. Do not reuse IRL XP's shipping script.
+4. Follow docs/RELEASING.md for the repository-specific Plugin Hub submission,
+   dependency hashes and network disclosures. Do not reuse IRL XP's shipping script.
 5. Migrate IRL XP to the portable reporting package in a separate tested change;
    its working production reporting implementation has been preserved here.
 

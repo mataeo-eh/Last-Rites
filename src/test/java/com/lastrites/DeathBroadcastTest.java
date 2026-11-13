@@ -24,7 +24,7 @@ class DeathBroadcastTest
         assertEquals("HCW4", npc.player);
         assertEquals("Damis", npc.killer);
         assertEquals("1K", npc.total);
-        assertTrue(npc.totalLabel().contains("approx."));
+        assertEquals("1K", npc.totalLabel(true));
         assertEquals("Kandarin", npc.location);
         DeathNotice pvp = parse("Pk tester(120) killed Seed Player0(70) with a 25 damage hit in the Wilderness.");
         assertEquals("70", pvp.total);
@@ -65,15 +65,17 @@ class DeathBroadcastTest
         NoticeQueue queue = new NoticeQueue(clock);
         queue.add(parse("A Hill Giant killed Big One(1.1K) with a 30 damage hit."));
         queue.enrich(1, 1142);
-        assertEquals("Total 1142 (HiScores; broadcast 1.1K)", queue.current(7, false).totalLabel());
+        assertEquals("1.1K - 1142", queue.current().totalLabel(true));
         assertEquals("1.1K", queue.history().get(0).total);
         clock.now += 7001;
-        assertNull(queue.current(7, false));
-        assertTrue(queue.current(7, true).preview);
+        assertNull(queue.current());
+        queue.showSample();
+        assertTrue(queue.current().preview);
+        queue.clear();
         queue.add(parse("A Hill Giant killed Big One(1.1K) with a 30 damage hit."));
         queue.setFilters("\\btotal=1142\\b");
         queue.enrich(1, 1142);
-        assertNull(queue.current(7, false));
+        assertNull(queue.current());
         queue.clear();
         assertTrue(queue.history().isEmpty());
     }
@@ -84,14 +86,15 @@ class DeathBroadcastTest
         NoticeQueue queue = new NoticeQueue();
         LastRitesConfig config = mock(LastRitesConfig.class);
         when(config.duration()).thenReturn(7);
+        when(config.lookupTotals()).thenReturn(true);
         LastRitesOverlay overlay = new LastRitesOverlay(null, queue, config);
-        BufferedImage canvas = new BufferedImage(420, 170, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage canvas = new BufferedImage(420, 220, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = canvas.createGraphics();
         try
         {
             assertNull(overlay.render(graphics));
             queue.add(NoticeQueue.sample());
-            assertEquals(new Dimension(400, 152), overlay.render(graphics));
+            assertEquals(new Dimension(400, 200), overlay.render(graphics));
             Path output = Path.of("build/previews/death-card.png");
             Files.createDirectories(output.getParent());
             ImageIO.write(canvas, "png", output.toFile());

@@ -7,16 +7,24 @@ Achievement-style death announcements for Old School RuneScape's Hardcore Worlds
 - Pop-ups show the player, final hit, reported killer and region when supplied.
 - Missing causes stay unlabelled. The plugin does not guess at weather, agility,
   poison, or other causes from missing information.
-- Alt-drag a pop-up to move it. **Position preview** keeps a sample visible while
-  positioning; RuneLite remembers the overlay's position in the selected profile.
+- Move with **Alt + drag on Windows** or **Option + drag on Mac**. Hold the same
+  key and drag an edge to resize. RuneLite remembers both size and position.
+- Scroll over the pop-up to browse up to 50 recent deaths.
+- **Show on new deaths** controls whether live events can open it; a separate
+  visible/hidden indicator shows its current state. Manually hiding turns that
+  preference off. Timer expiry leaves it on. Samples override hiding temporarily.
+- Set the duration in seconds: **7 by default**, **0 to stay visible**. Manually
+  showing the pop-up pins it until hidden. Each new live death restarts a timed view.
 - Full integer broadcast totals are preserved. Abbreviated totals can be enriched
-  through Jagex's **Hardcore Main** HiScores table. These values are explicitly
-  labelled **HiScores** and retain the broadcast value alongside them: a lookup
-  may lag or reflect a subsequent reset. Unavailable lookups keep the broadcast.
+  through Jagex's **Hardcore Main** HiScores table. These values follow the original
+  total, for example **Example (1K) - 1075**. The suffix comes from HiScores and
+  may lag or reflect a subsequent reset. **Show full totals** turns lookup and
+  display off when you prefer the broadcast alone. Unavailable lookups keep the broadcast.
 - Regex exclusions can match the original broadcast or named fields. Open the
   skull sidebar to save filters, view recent deaths, preview the pop-up, or report a bug.
 
-This is a working development prototype, not a published Plugin Hub release.
+Version **0.0.1** is the first Plugin Hub submission; it is not available in the
+Hub until RuneLite reviews and merges the submission.
 It recognises the verified broadcast formats documented in [the implementation
 notes](docs/IMPLEMENTATION.md). New Jagex formats are ignored until verified.
 
@@ -37,7 +45,7 @@ starting RuneLite. It uses RuneLite's existing profiles and credential handling.
 No credential file is copied or read by the plugin or workspace tooling.
 
 Enable **Last Rites** in the normal Plugins panel. Click its skull icon, then
-**Show sample death** or **Toggle position preview**. Live announcements require
+**Show sample death** or **Show pop-up**. Live announcements require
 a Hardcore world. The sample never makes a HiScores request or enters history.
 
 ## Filters
@@ -71,7 +79,9 @@ contact address is required. Reports use the same HTTPS receiver and private
 developer inbox, with a `[Last Rites]` title prefix so the plugin is identifiable.
 The developer's private destination is not exposed by the client or responses.
 
-You review the exact text and confirm before sending. Optional technical details
+You review the exact text and check the highlighted confirmation box before
+sending. The disabled Send button explains this in its tooltip. The report window
+closes after confirmed acceptance and local cleanup. Optional technical details
 contain only reporting revision, OS name, Java version, and RuneLite version.
 Logs, screenshots, account information, death history, and player names are not
 attached automatically. Leave personal information out of free text.
@@ -97,7 +107,6 @@ server-channel/world gating, HiScores outcomes, report payload privacy, retry
 receipts, and draft/window recreation. HTTP transport tests use interceptors and
 do not send reports to the real inbox.
 
-Before publishing: validate additional live server formats, test on multiple
-client sizes, obtain Plugin Hub review including RE2/J and the shared reporting
-endpoint, and add this repository's release/submission workflow. Publishing is
-separate from creating and pushing this development repository.
+Before approval: validate additional live server formats and have testers check
+real Hardcore worlds and client sizes. Plugin Hub review includes RE2/J and the
+shared reporting endpoint. See [the release procedure](docs/RELEASING.md).

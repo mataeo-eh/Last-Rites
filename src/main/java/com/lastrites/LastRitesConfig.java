@@ -11,12 +11,12 @@ public interface LastRitesConfig extends Config
 {
     String GROUP = "lastrites";
 
-    @ConfigItem(keyName = "duration", name = "Display duration", description = "Seconds per death announcement", position = 0)
-    @Range(min = 2, max = 30)
+    @ConfigItem(keyName = "duration", name = "Display duration", description = "Seconds after a new death or sample. 0 keeps the pop-up visible until hidden.", position = 0)
+    @Range(min = 0, max = 3600)
     default int duration() { return 7; }
 
-    @ConfigItem(keyName = "positionPreview", name = "Position preview", description = "Keep a sample visible so you can Alt-drag it into place", position = 1)
-    default boolean positionPreview() { return false; }
+    @ConfigItem(keyName = "popupEnabled", name = "Allow death pop-ups", description = "New deaths may display the pop-up. Manually hiding it turns this off; sample deaths still work.", position = 1)
+    default boolean popupEnabled() { return true; }
 
     @ConfigItem(keyName = "lookupTotals", name = "Look up full totals", description = "Send broadcast player names to Jagex Hardcore Main HiScores for full totals. HiScores may lag or reflect a reset.", position = 2)
     default boolean lookupTotals() { return true; }

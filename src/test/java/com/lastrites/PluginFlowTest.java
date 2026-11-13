@@ -66,9 +66,9 @@ class PluginFlowTest
             when(f.hiscores.lookupAsync("Big One", HiscoreEndpoint.HARDCORE_MAIN)).thenReturn(result);
             f.plugin.onChatMessage(message(ChatMessageType.BROADCAST, "Damis killed Big One(1.1K) with a 24 damage hit."));
             f.plugin.resolveNextTotal();
-            assertEquals("1.1K", f.queue.current(7, false).total);
+            assertEquals("1.1K", f.queue.current().total);
             result.complete(new HiscoreResult("Big One", Map.of(HiscoreSkill.OVERALL, new Skill(12, 1142, 1000))));
-            assertEquals(1142, f.queue.current(7, false).hiscoreTotal);
+            assertEquals(1142, f.queue.current().hiscoreTotal);
             verify(f.hiscores).lookupAsync("Big One", HiscoreEndpoint.HARDCORE_MAIN);
         }
         finally { f.stop(); }
@@ -128,6 +128,8 @@ class PluginFlowTest
             when(client.getWorldType()).thenReturn(EnumSet.of(WorldType.HARDCORE_MAIN));
             when(config.excludeRegex()).thenReturn("");
             when(config.lookupTotals()).thenReturn(true);
+            when(config.duration()).thenReturn(7);
+            when(config.popupEnabled()).thenReturn(true);
             inject(plugin, "client", client);
             inject(plugin, "config", config);
             inject(plugin, "configManager", mock(ConfigManager.class));
@@ -137,6 +139,7 @@ class PluginFlowTest
             inject(plugin, "toolbar", mock(ClientToolbar.class));
             inject(plugin, "reports", reports);
             inject(plugin, "hiscores", hiscores);
+            inject(plugin, "mouseManager", mock(net.runelite.client.input.MouseManager.class));
         }
 
         void stop() throws Exception

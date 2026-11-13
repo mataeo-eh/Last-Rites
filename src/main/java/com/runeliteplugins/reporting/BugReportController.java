@@ -187,12 +187,12 @@ public final class BugReportController
                 final boolean cleared = removed;
                 SwingUtilities.invokeLater(() ->
                 {
-                    panel.load(BugReport.empty());
-                    // Shown only after the server's receipt echoed this exact ID, so
-                    // "submitted successfully" is a verified claim, not an optimistic one.
-                    setBusy(false, "Thanks! Your bug report was submitted successfully. Reference: "
-                        + report.getSubmissionId()
-                        + (cleared ? "" : ". The local recovery copy could not be deleted; use Discard draft to remove it."));
+                    // Acceptance and local cleanup have finished. Close instead of
+                    // presenting another blank submission form.
+                    setBusy(false, cleared ? "Report submitted successfully."
+                        : "Report submitted. The local recovery copy could not be removed.");
+                    closeWindow();
+                    panel = null;
                 });
             });
             return;

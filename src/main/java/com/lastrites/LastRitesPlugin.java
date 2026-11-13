@@ -23,6 +23,7 @@ import net.runelite.client.hiscore.HiscoreClient;
 import net.runelite.client.hiscore.HiscoreEndpoint;
 import net.runelite.client.hiscore.HiscoreSkill;
 import net.runelite.client.hiscore.Skill;
+import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.task.Schedule;
@@ -44,6 +45,7 @@ public class LastRitesPlugin extends Plugin
     @Inject private ClientToolbar toolbar;
     @Inject private BugReportController reports;
     @Inject private HiscoreClient hiscores;
+    @Inject private MouseManager mouseManager;
     private final Deque<DeathNotice> lookups = new ArrayDeque<>();
     private NavigationButton navigation;
     private LastRitesPanel panel;
@@ -69,11 +71,13 @@ public class LastRitesPlugin extends Plugin
     {
         lifecycle++;
         running = true;
+        notices.configure(config.duration(), config.popupEnabled());
         notices.setFilters(config.excludeRegex());
         overlays.add(overlay);
+        mouseManager.registerMouseWheelListener(overlay);
         onEdt(() ->
         {
-            panel = new LastRitesPanel(notices, config, configManager, reports);
+            panel = new LastRitesPanel(notices, config, configManager, reports, this::togglePopup);
             navigation = NavigationButton.builder().tooltip("Last Rites").priority(8)
                 .icon(icon()).panel(panel).build();
             toolbar.addNavigation(navigation);
@@ -86,6 +90,7 @@ public class LastRitesPlugin extends Plugin
         running = false;
         lifecycle++;
         synchronized (lookups) { lookups.clear(); }
+        mouseManager.unregisterMouseWheelListener(overlay);
         overlays.remove(overlay);
         notices.clear();
         onEdt(() ->
@@ -126,8 +131,23 @@ public class LastRitesPlugin extends Plugin
     {
         if (LastRitesConfig.GROUP.equals(event.getGroup()))
         {
+            notices.configure(config.duration(), config.popupEnabled());
             notices.setFilters(config.excludeRegex());
             if (!config.lookupTotals()) { synchronized (lookups) { lookups.clear(); } }
+        }
+    }
+
+    private void togglePopup()
+    {
+        if (notices.isVisible())
+        {
+            configManager.setConfiguration(LastRitesConfig.GROUP, "popupEnabled", false);
+            notices.hide();
+        }
+        else
+        {
+            configManager.setConfiguration(LastRitesConfig.GROUP, "popupEnabled", true);
+            notices.showPinned();
         }
     }
 

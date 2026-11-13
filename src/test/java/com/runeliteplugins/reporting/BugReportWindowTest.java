@@ -94,6 +94,57 @@ class BugReportWindowTest
         }
     }
 
+    @Test
+    void acceptedReportClosesWindowAndReopeningStartsEmpty() throws Exception
+    {
+        assumeFalse(GraphicsEnvironment.isHeadless(), "Native window requires a display");
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        BugReportClient client = mock(BugReportClient.class);
+        when(client.isConfigured()).thenReturn(true);
+        AtomicReference<Consumer<BugReportClient.Outcome>> completion = new AtomicReference<>();
+        CountDownLatch sent = new CountDownLatch(1);
+        when(client.submit(any(), any())).thenAnswer(invocation -> {
+            completion.set(invocation.getArgument(1));
+            sent.countDown();
+            return mock(Call.class);
+        });
+        BugReportDraftStore store = new BugReportDraftStore(new Gson(), directory.resolve("accepted.json"));
+        store.save(BugReportingTest.report());
+        ReportingSettings settings = new ReportingSettings("Plugin", "test-reports", "");
+        BugReportController controller = new BugReportController(client, store, executor, settings);
+        try
+        {
+            SwingUtilities.invokeAndWait(() -> controller.open(new JPanel()));
+            drain(executor);
+            SwingUtilities.invokeAndWait(() -> {
+                BugReportPanel panel = BugReportingTest.field(controller, "panel", BugReportPanel.class);
+                BugReportingTest.field(panel, "review", JButton.class).doClick();
+                BugReportingTest.field(panel, "consent", JCheckBox.class).doClick();
+                BugReportingTest.field(panel, "send", JButton.class).doClick();
+            });
+            assertTrue(sent.await(5, TimeUnit.SECONDS));
+            completion.get().accept(BugReportClient.Outcome.ACCEPTED);
+            SwingUtilities.invokeAndWait(() -> {});
+            drain(executor);
+            SwingUtilities.invokeAndWait(() -> {
+                assertNull(BugReportingTest.field(controller, "window", JDialog.class));
+                assertNull(BugReportingTest.field(controller, "panel", BugReportPanel.class));
+                controller.open(new JPanel());
+            });
+            drain(executor);
+            SwingUtilities.invokeAndWait(() -> {
+                BugReportPanel panel = BugReportingTest.field(controller, "panel", BugReportPanel.class);
+                assertEquals("", panel.snapshot().getTitle());
+                assertEquals("", panel.snapshot().getDescription());
+            });
+        }
+        finally
+        {
+            SwingUtilities.invokeAndWait(controller::shutDown);
+            executor.shutdownNow();
+        }
+    }
+
     /** Wait for known work completion and then drain the EDT, without timing guesses. */
     private static void drain(ScheduledExecutorService executor) throws Exception
     {

@@ -2,10 +2,10 @@ package com.lastrites;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.google.re2j.Pattern;
-import com.google.re2j.PatternSyntaxException;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
-/** Compiled user regex exclusions. RE2/J guarantees bounded work for broadcast text. */
+/** Compiled user regex exclusions using the JDK's standard Pattern API. */
 final class NoticeFilters
 {
     private final List<Pattern> patterns = new ArrayList<>();

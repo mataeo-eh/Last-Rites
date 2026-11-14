@@ -17,7 +17,6 @@ repositories {
 // Match RuneLite's official example and the existing working IRL XP launcher.
 def runeLiteVersion = 'latest.release'
 dependencies {
-    implementation 'com.google.re2j:re2j:1.8'
     compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
     testImplementation group: 'net.runelite', name: 'client', version: runeLiteVersion
     testImplementation group: 'net.runelite', name: 'jshell', version: runeLiteVersion
@@ -57,12 +56,9 @@ test {
     jvmArgs '-Dnet.bytebuddy.experimental=true'
 }
 
-// RuneLite's developer-mode sideload loader accepts one JAR. Bundle only this
-// plugin's runtime dependency (RE2/J); RuneLite itself remains compileOnly.
+// Convenience artifact for independently started developer clients. No extra
+// runtime libraries are needed; the Plugin Hub uses its standard build instead.
 tasks.register('sideloadJar', Jar) {
     archiveClassifier = 'sideload'
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from sourceSets.main.output
-    dependsOn configurations.runtimeClasspath
-    from { configurations.runtimeClasspath.collect { zipTree(it) } }
 }

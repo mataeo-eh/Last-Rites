@@ -1,8 +1,6 @@
 package com.lastrites;
 
 import com.google.inject.Provides;
-import com.runeliteplugins.reporting.BugReportController;
-import com.runeliteplugins.reporting.ReportingSettings;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -43,7 +41,6 @@ public class LastRitesPlugin extends Plugin
     @Inject private LastRitesOverlay overlay;
     @Inject private NoticeQueue notices;
     @Inject private ClientToolbar toolbar;
-    @Inject private BugReportController reports;
     @Inject private HiscoreClient hiscores;
     @Inject private MouseManager mouseManager;
     private final Deque<DeathNotice> lookups = new ArrayDeque<>();
@@ -59,13 +56,6 @@ public class LastRitesPlugin extends Plugin
         return manager.getConfig(LastRitesConfig.class);
     }
 
-    @Provides ReportingSettings reportingSettings()
-    {
-        // Public receiver address only; the existing service delivers to a private inbox.
-        return new ReportingSettings("Last Rites", "last-rites",
-            "https://receiver-production-5b81.up.railway.app/v1/reports");
-    }
-
     @Override
     protected void startUp() throws Exception
     {
@@ -77,7 +67,7 @@ public class LastRitesPlugin extends Plugin
         mouseManager.registerMouseWheelListener(overlay);
         onEdt(() ->
         {
-            panel = new LastRitesPanel(notices, config, configManager, reports, this::togglePopup);
+            panel = new LastRitesPanel(notices, config, configManager, this::togglePopup);
             navigation = NavigationButton.builder().tooltip("Last Rites").priority(8)
                 .icon(icon()).panel(panel).build();
             toolbar.addNavigation(navigation);
@@ -97,7 +87,6 @@ public class LastRitesPlugin extends Plugin
         {
             if (navigation != null) { toolbar.removeNavigation(navigation); }
             if (panel != null) { panel.stop(); }
-            reports.shutDown();
             navigation = null;
             panel = null;
         });

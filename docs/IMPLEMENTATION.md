@@ -19,9 +19,10 @@ Hardcore death achievement pop-up was found. This cannot rule out unpublished wo
 `LastRitesPlugin` gates events on `WorldType.HARDCORE_MAIN` and server message
 types `BROADCAST`/`GAMEMESSAGE`. `BroadcastParser` accepts only verified death
 grammars. `DeathNotice` preserves source precision. `NoticeFilters` compiles user
-RE2 exclusions. `NoticeQueue` synchronizes the bounded display queue and history.
+exclusions with `java.util.regex.Pattern`. `NoticeQueue` synchronizes the bounded display queue and history.
 `LastRitesOverlay` paints the card and delegates position persistence to RuneLite.
-`LastRitesPanel` exposes preview, filters, history, and the portable reporting UI.
+`LastRitesPanel` exposes preview, filters, history, and instructions for the
+Plugin Hub's existing Report an issue link.
 
 The display stores 50 session history records, never written to disk. New deaths
 appear immediately and restart the timed view; scrolling browses the same history.
@@ -72,7 +73,8 @@ lookups clears pending work and suppresses in-flight results.
 One result is awaited at a time, with at most one new start each second and 25
 pending names. The future timeout ends waiting; RuneLite does not expose the HTTP
 Call for cancellation, so timed-out transport may still finish in the background.
-Only abbreviated broadcast totals trigger lookups. The returned number is
+All plugin-requested networking is behind the full-total lookup option, which
+is off by default. Only abbreviated broadcast totals trigger lookups after opt-in. The returned number is
 shown after the original abbreviation, for example `(1K) - 1075`. A later profile
 reset cannot be distinguished reliably from the death-time character using this
 API, so this is a full published total, not proof of an exact death-time total.
@@ -86,10 +88,11 @@ API, so this is a full published total, not proof of an exact death-time total.
    browsing, precise trackpad rotation, and leaving camera scrolling untouched outside the popup.
 3. Observe service update/reset behaviour before making stronger death-time
    precision claims. Preserve the source labels even if a lookup succeeds.
-4. Follow docs/RELEASING.md for the repository-specific Plugin Hub submission,
-   dependency hashes and network disclosures. Do not reuse IRL XP's shipping script.
-5. Migrate IRL XP to the portable reporting package in a separate tested change;
-   its working production reporting implementation has been preserved here.
+4. Follow docs/RELEASING.md for the standard Plugin Hub submission. Only the
+   plugin manifest needs changing; there is no additional runtime dependency.
+5. Bug reporting uses the Plugin Hub issue link. The reusable native reporting
+   template is local workspace tooling under shared/templates/native-reporting,
+   independent of Last Rites and IRL XP's existing implementation.
 
 ## Development launch constraint
 

@@ -55,7 +55,13 @@ class DeathBroadcastTest
         assertFalse(filters.excludes(parse("X(330) was killed by a 6 damage hit.")));
         assertTrue(filters.excludes(parse("A Goblin killed X(330) with a 6 damage hit.")));
         assertTrue(filters.errorText().contains("line 2"));
-        assertTrue(new NoticeFilters("(?=lookahead)").errorText().contains("line 1"));
+        NoticeFilters lookahead = new NoticeFilters("\\btotal=(?=33\\b)\\d+\\b");
+        assertEquals("", lookahead.errorText());
+        assertTrue(lookahead.excludes(parse("X(33) was killed by a 6 damage hit.")));
+        assertFalse(lookahead.excludes(parse("X(330) was killed by a 6 damage hit.")));
+        NoticeFilters backreference = new NoticeFilters("^([A-Za-z]+) killed \\1\\(");
+        assertEquals("", backreference.errorText());
+        assertTrue(backreference.excludes(parse("X killed X(33) with a 6 damage hit.")));
     }
 
     @Test

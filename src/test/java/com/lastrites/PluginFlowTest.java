@@ -1,6 +1,5 @@
 package com.lastrites;
 
-import com.runeliteplugins.reporting.BugReportController;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Map;
@@ -52,7 +51,6 @@ class PluginFlowTest
         }
         finally { f.stop(); }
         assertTrue(f.queue.history().isEmpty());
-        verify(f.reports).shutDown();
     }
 
     @Test
@@ -102,6 +100,46 @@ class PluginFlowTest
         finally { f.stop(); }
     }
 
+    @Test
+    void networkingIsOptInAndDisablingItClearsQueuedWorkAndIgnoresInflightResults() throws Exception
+    {
+        assertFalse(new LastRitesConfig() {}.lookupTotals());
+        Fixture f = new Fixture();
+        when(f.config.lookupTotals()).thenReturn(false);
+        f.plugin.startUp();
+        try
+        {
+            f.plugin.onChatMessage(message(ChatMessageType.BROADCAST,
+                "Damis killed Disabled(1K) with a 24 damage hit."));
+            f.plugin.resolveNextTotal();
+            verifyNoInteractions(f.hiscores);
+
+            when(f.config.lookupTotals()).thenReturn(true);
+            CompletableFuture<HiscoreResult> result = new CompletableFuture<>();
+            when(f.hiscores.lookupAsync("Enabled", HiscoreEndpoint.HARDCORE_MAIN)).thenReturn(result);
+            f.plugin.onChatMessage(message(ChatMessageType.BROADCAST,
+                "Damis killed Enabled(1K) with a 24 damage hit."));
+            f.plugin.resolveNextTotal();
+            verify(f.hiscores).lookupAsync("Enabled", HiscoreEndpoint.HARDCORE_MAIN);
+            f.plugin.onChatMessage(message(ChatMessageType.BROADCAST,
+                "Damis killed Queued(1K) with a 24 damage hit."));
+
+            when(f.config.lookupTotals()).thenReturn(false);
+            net.runelite.client.events.ConfigChanged changed = new net.runelite.client.events.ConfigChanged();
+            changed.setGroup(LastRitesConfig.GROUP);
+            changed.setKey("lookupTotals");
+            f.plugin.onConfigChanged(changed);
+            result.complete(new HiscoreResult("Enabled", Map.of(HiscoreSkill.OVERALL, new Skill(12, 1075, 1000))));
+            assertTrue(f.queue.history().stream().allMatch(n -> n.hiscoreTotal == null));
+            f.plugin.resolveNextTotal();
+            // Re-enabling must not resurrect requests queued before disabling.
+            when(f.config.lookupTotals()).thenReturn(true);
+            f.plugin.resolveNextTotal();
+            verifyNoMoreInteractions(f.hiscores);
+        }
+        finally { f.stop(); }
+    }
+
     private static ChatMessage message(ChatMessageType type, String text)
     {
         return new ChatMessage(null, type, "", text, "", 0);
@@ -120,7 +158,6 @@ class PluginFlowTest
         final Client client = mock(Client.class);
         final LastRitesConfig config = mock(LastRitesConfig.class);
         final HiscoreClient hiscores = mock(HiscoreClient.class);
-        final BugReportController reports = mock(BugReportController.class);
         final NoticeQueue queue = new NoticeQueue();
 
         Fixture() throws Exception
@@ -137,7 +174,6 @@ class PluginFlowTest
             inject(plugin, "overlay", new LastRitesOverlay(plugin, queue, config));
             inject(plugin, "notices", queue);
             inject(plugin, "toolbar", mock(ClientToolbar.class));
-            inject(plugin, "reports", reports);
             inject(plugin, "hiscores", hiscores);
             inject(plugin, "mouseManager", mock(net.runelite.client.input.MouseManager.class));
         }

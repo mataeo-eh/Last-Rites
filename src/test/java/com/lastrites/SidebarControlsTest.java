@@ -1,6 +1,5 @@
 package com.lastrites;
 
-import com.runeliteplugins.reporting.BugReportController;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics2D;
@@ -53,7 +52,7 @@ class SidebarControlsTest
             }).when(manager).setConfiguration(eq(LastRitesConfig.GROUP), anyString(), any(Object.class));
             NoticeQueue state = new NoticeQueue();
             LastRitesPanel panel = new LastRitesPanel(state, config, manager,
-                mock(BugReportController.class), () -> {});
+                () -> {});
             JDialog window = new JDialog();
             try
             {
@@ -79,6 +78,8 @@ class SidebarControlsTest
                 assertEquals(0, seconds.get());
                 find(panel, "popupFullTotals", JCheckBox.class).doClick();
                 assertFalse(full.get());
+                assertEquals("To report a bug, open this plugin's Plugin Hub page and use \"Report an issue\".",
+                    find(panel, "supportInstructions", javax.swing.JTextArea.class).getText());
                 window.validate();
                 BufferedImage image = new BufferedImage(260, 750, BufferedImage.TYPE_INT_RGB);
                 Graphics2D g = image.createGraphics();

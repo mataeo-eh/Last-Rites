@@ -18,10 +18,11 @@ Achievement-style death announcements for Old School RuneScape's Hardcore Worlds
 - Full integer broadcast totals are preserved. Abbreviated totals can be enriched
   through Jagex's **Hardcore Main** HiScores table. These values follow the original
   total, for example **Example (1K) - 1075**. The suffix comes from HiScores and
-  may lag or reflect a subsequent reset. **Show full totals** turns lookup and
-  display off when you prefer the broadcast alone. Unavailable lookups keep the broadcast.
+  may lag or reflect a subsequent reset. **Full totals (network lookup)** is off
+  by default. Enable it to send broadcast player names to Jagex HiScores; turn it
+  off to use the broadcast alone. Unavailable lookups keep the broadcast.
 - Regex exclusions can match the original broadcast or named fields. Open the
-  skull sidebar to save filters, view recent deaths, preview the pop-up, or report a bug.
+  skull sidebar to save filters, view recent deaths, preview the pop-up, or find the Plugin Hub issue-reporting instructions.
 
 Version **0.0.1** is the first Plugin Hub submission; it is not available in the
 Hub until RuneLite reviews and merges the submission.
@@ -67,46 +68,27 @@ always retains the server text. Missing `killer`/`location` values are empty.
 Filters apply before lookups and are checked again when a full total arrives.
 An announcement already displayed may therefore be removed after enrichment.
 
-Filters use [RE2/J](https://github.com/google/re2j): ordinary regex alternation,
-groups, anchors, character classes and word boundaries work. Lookarounds and
-backreferences are unsupported. Invalid rules are identified by line in the
-sidebar; valid rules continue working. Limits: 32 rules, 512 characters per rule.
+Filters use Java's built-in `java.util.regex` API, including lookarounds and
+backreferences. Invalid rules are identified by line in the sidebar; valid rules
+continue working. Limits: 32 lines, 512 characters per rule.
 
-## Private bug reports
+## Support
 
-**Report a bug** opens the native form used by IRL XP. No account, email, or
-contact address is required. Reports use the same HTTPS receiver and private
-developer inbox, with a `[Last Rites]` title prefix so the plugin is identifiable.
-The developer's private destination is not exposed by the client or responses.
+To report a bug or request a feature, open **Last Rites** on the **Plugin Hub**
+and use **Report an issue**. This opens the plugin's
+[GitHub issue page](https://github.com/mataeo-eh/Last-Rites/issues).
 
-You review the exact text and check the highlighted confirmation box before
-sending. The disabled Send button explains this in its tooltip. The report window
-closes after confirmed acceptance and local cleanup. Optional technical details
-contain only reporting revision, OS name, Java version, and RuneLite version.
-Logs, screenshots, account information, death history, and player names are not
-attached automatically. Leave personal information out of free text.
-
-Drafts are saved locally in RuneLite's `last-rites` directory, outside synced
-configuration. Sending saves a recovery copy. Retrying an unchanged report reuses
-its reference; editing creates a new one. Acceptance confirms durable queueing,
-not final delivery into GitHub. Delivered receiver copies expire after 30 days;
-private issues and host backups have separate retention.
-
-Railway processes connection metadata including IP addresses. The receiver does
-not store IP addresses or include them in issues. This is optional private
-reporting, not a fully anonymous communications service.
-
-The portable reporting package is included in this repository and has no build
-dependency on IRL XP or the parent workspace. See [reuse instructions](docs/REPORTING.md).
+The sidebar provides these instructions. Last Rites contains no custom report
+form, report transport, or report-draft storage.
 
 ## Validation and rollout
 
 Tests cover observed death formats, blank causes, exact/abbreviated totals, regex
 rules and errors, queueing/enrichment, rendering, overlay position restoration,
-server-channel/world gating, HiScores outcomes, report payload privacy, retry
-receipts, and draft/window recreation. HTTP transport tests use interceptors and
-do not send reports to the real inbox.
+server-channel/world gating, HiScores outcomes, sidebar controls, and Plugin Hub
+support instructions. The Plugin Hub uses `build=standard`; production code
+requires only the JDK and RuneLite's existing APIs.
 
 Before approval: validate additional live server formats and have testers check
-real Hardcore worlds and client sizes. Plugin Hub review includes RE2/J and the
-shared reporting endpoint. See [the release procedure](docs/RELEASING.md).
+real Hardcore worlds and client sizes. The submission uses the standard Plugin Hub build with no additional runtime
+dependencies. See [the release procedure](docs/RELEASING.md).

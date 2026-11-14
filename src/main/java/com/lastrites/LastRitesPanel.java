@@ -1,6 +1,5 @@
 package com.lastrites;
 
-import com.runeliteplugins.reporting.BugReportController;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -19,7 +18,7 @@ import javax.swing.Timer;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.PluginPanel;
 
-/** Preview, local exclusions, and private bug reporting live beside recent announcements. */
+/** Preview, local exclusions, history, and Plugin Hub support guidance share the sidebar. */
 final class LastRitesPanel extends PluginPanel
 {
     private final Timer timer;
@@ -28,7 +27,7 @@ final class LastRitesPanel extends PluginPanel
     private final JTextArea filters = new JTextArea(5, 18);
 
     LastRitesPanel(NoticeQueue notices, LastRitesConfig config, ConfigManager manager,
-        BugReportController reports, Runnable togglePopup)
+        Runnable togglePopup)
     {
         setLayout(new BorderLayout(0, 12));
         setBorder(BorderFactory.createEmptyBorder(14, 10, 14, 10));
@@ -69,12 +68,14 @@ final class LastRitesPanel extends PluginPanel
             "duration", ((Number) duration.getValue()).intValue()));
         controls.add(duration);
         controls.add(note("0 seconds keeps the pop-up visible. Default: 7 seconds. Manually showing it keeps it open until hidden.", 5));
-        JCheckBox fullTotals = new JCheckBox("Show full totals", config.lookupTotals());
+        JCheckBox fullTotals = new JCheckBox("Full totals (network lookup)", config.lookupTotals());
         fullTotals.setName("popupFullTotals");
         fullTotals.setOpaque(false);
+        fullTotals.setToolTipText("Optional network requests send broadcast player names to Jagex HiScores. Off by default.");
         fullTotals.addActionListener(event -> manager.setConfiguration(LastRitesConfig.GROUP,
             "lookupTotals", fullTotals.isSelected()));
         controls.add(fullTotals);
+        controls.add(note("Optional: sends broadcast player names to Jagex HiScores to fetch full totals.", 3));
         controls.add(Box.createVerticalStrut(12));
         controls.add(note("Hide matching deaths — one regex per line. Example: \\btotal=33\\b\nMatches the broadcast and named fields.", 5));
         filters.setText(config.excludeRegex());
@@ -90,7 +91,7 @@ final class LastRitesPanel extends PluginPanel
         controls.add(apply);
         errors.setForeground(new Color(0xD8877C));
         controls.add(errors);
-        controls.add(note("Regex uses RE2 syntax: no lookaround or backreferences. Valid rules still work when another rule has an error.", 5));
+        controls.add(note("Filters use Java regex syntax. Valid rules still work when another rule has an error.", 5));
         controls.add(note("Full totals appear after the broadcast total, for example (1K) - 1075. HiScores may lag or reflect a reset.", 5));
         controls.add(new JLabel("Recent deaths (this session)"));
         JScrollPane recentScroll = new JScrollPane(recent);
@@ -99,9 +100,9 @@ final class LastRitesPanel extends PluginPanel
         recentScroll.getVerticalScrollBar().setUnitIncrement(16);
         handOffWheelAtEdges(recentScroll);
         controls.add(recentScroll);
-        JButton report = button("Report a bug");
-        report.addActionListener(event -> reports.open(this));
-        controls.add(report);
+        JTextArea support = note("To report a bug, open this plugin's Plugin Hub page and use \"Report an issue\".", 4);
+        support.setName("supportInstructions");
+        controls.add(support);
         // PluginPanel's parent supplies scrolling; all long text wraps to sidebar width.
         add(controls, BorderLayout.NORTH);
         getScrollPane().getVerticalScrollBar().setUnitIncrement(16);

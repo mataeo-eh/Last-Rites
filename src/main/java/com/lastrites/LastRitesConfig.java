@@ -18,9 +18,9 @@ public interface LastRitesConfig extends Config
     @ConfigItem(keyName = "popupEnabled", name = "Allow death pop-ups", description = "New deaths may display the pop-up. Manually hiding it turns this off; sample deaths still work.", position = 1)
     default boolean popupEnabled() { return true; }
 
-    @ConfigItem(keyName = "lookupTotals", name = "Look up full totals", description = "Send broadcast player names to Jagex Hardcore Main HiScores for full totals. HiScores may lag or reflect a reset.", position = 2)
-    default boolean lookupTotals() { return true; }
+    @ConfigItem(keyName = "lookupTotals", name = "Full totals (network lookup)", description = "Enable network requests that send broadcast player names to Jagex Hardcore Main HiScores for full totals. Off by default. HiScores may lag or reflect a reset.", position = 2)
+    default boolean lookupTotals() { return false; }
 
-    @ConfigItem(keyName = "excludeRegex", name = "Hide matching deaths", description = "One RE2 regex per line, case insensitive. Matches broadcast text and fields such as total=33. Example: \\btotal=33\\b. Invalid rules are shown in the sidebar.", position = 3)
+    @ConfigItem(keyName = "excludeRegex", name = "Hide matching deaths", description = "One Java regex per line, case insensitive. Matches broadcast text and fields such as total=33. Example: \\btotal=33\\b. Invalid rules are shown in the sidebar.", position = 3)
     default String excludeRegex() { return ""; }
 }

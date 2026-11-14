@@ -12,8 +12,11 @@ import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.MessageNode;
 import net.runelite.api.WorldType;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.ScriptCallbackEvent;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -35,6 +38,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 public class LastRitesPlugin extends Plugin
 {
     @Inject private Client client;
+    @Inject private ClientThread clientThread;
     @Inject private LastRitesConfig config;
     @Inject private ConfigManager configManager;
     @Inject private OverlayManager overlays;
@@ -61,6 +65,7 @@ public class LastRitesPlugin extends Plugin
     {
         lifecycle++;
         running = true;
+        clientThread.invoke(client::refreshChat);
         notices.configure(config.duration(), config.popupEnabled());
         notices.setFilters(config.excludeRegex());
         overlays.add(overlay);
@@ -78,6 +83,8 @@ public class LastRitesPlugin extends Plugin
     protected void shutDown() throws Exception
     {
         running = false;
+        // Rebuild buffered chat without our filter when the plugin is disabled.
+        clientThread.invoke(client::refreshChat);
         lifecycle++;
         synchronized (lookups) { lookups.clear(); }
         mouseManager.unregisterMouseWheelListener(overlay);
@@ -97,8 +104,7 @@ public class LastRitesPlugin extends Plugin
     {
         // Only server channels on the API's explicit Hardcore world flag qualify.
         // ChatMessage.name/sender/timestamp/messageNode carry no additional death facts.
-        if (!running || !client.getWorldType().contains(WorldType.HARDCORE_MAIN)
-            || (event.getType() != ChatMessageType.BROADCAST && event.getType() != ChatMessageType.GAMEMESSAGE))
+        if (!acceptsDeathMessages(event.getType()))
         {
             return;
         }
@@ -116,6 +122,40 @@ public class LastRitesPlugin extends Plugin
     }
 
     @Subscribe
+    public void onScriptCallbackEvent(ScriptCallbackEvent event)
+    {
+        if (!running || !config.hideDeathMessages() || !"chatFilterCheck".equals(event.getEventName()))
+        {
+            return;
+        }
+        // RuneLite's ChatFilterPlugin contract: the top three ints are the
+        // visibility flag, ChatMessageType id, and MessageNode id, respectively.
+        // Only set visibility to zero; never undo another plugin's decision.
+        int[] stack = client.getIntStack();
+        int size = client.getIntStackSize();
+        if (size < 3 || !acceptsDeathMessages(ChatMessageType.of(stack[size - 2])))
+        {
+            return;
+        }
+        MessageNode message = client.getMessages().get(stack[size - 1]);
+        // Use the original node value, not the display string another plugin
+        // may have censored. Name, sender, timestamp, and format are not death data.
+        // Reuse the verified broadcast parser without adding to history or lookups:
+        // this callback runs again when chat is rebuilt, not just on new messages.
+        if (message != null && BroadcastParser.parse(message.getValue(), 0).isPresent())
+        {
+            stack[size - 3] = 0;
+        }
+    }
+
+    private boolean acceptsDeathMessages(ChatMessageType type)
+    {
+        // Both ingestion and chat replacement use the same world/channel boundary.
+        return running && client.getWorldType().contains(WorldType.HARDCORE_MAIN)
+            && (type == ChatMessageType.BROADCAST || type == ChatMessageType.GAMEMESSAGE);
+    }
+
+    @Subscribe
     public void onConfigChanged(ConfigChanged event)
     {
         if (LastRitesConfig.GROUP.equals(event.getGroup()))
@@ -123,6 +163,11 @@ public class LastRitesPlugin extends Plugin
             notices.configure(config.duration(), config.popupEnabled());
             notices.setFilters(config.excludeRegex());
             if (!config.lookupTotals()) { synchronized (lookups) { lookups.clear(); } }
+            if ("hideDeathMessages".equals(event.getKey()))
+            {
+                // Config events can originate on Swing's EDT; chat belongs to the client thread.
+                clientThread.invoke(client::refreshChat);
+            }
         }
     }
 

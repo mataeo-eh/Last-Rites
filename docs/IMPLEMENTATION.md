@@ -24,6 +24,14 @@ exclusions with `java.util.regex.Pattern`. `NoticeQueue` synchronizes the bounde
 `LastRitesPanel` exposes preview, filters, history, and instructions for the
 Plugin Hub's existing Report an issue link.
 
+Chat replacement is enabled by default. It uses RuneLite's `chatFilterCheck`
+callback, like the built-in Chat Filter plugin, and the same world/channel
+boundary and verified parser as ingestion. It changes only chat visibility;
+original messages, popup delivery, history, and HiScores work remain intact.
+Popup exclusions and manual hiding still apply without restoring the chat feed.
+Chat rebuilds never add notices or schedule lookups. Startup, shutdown, and option
+changes refresh buffered chat on RuneLite's client thread.
+
 The display stores 50 session history records, never written to disk. New deaths
 appear immediately and restart the timed view; scrolling browses the same history.
 The timer defaults to 7 seconds, permits 0 for persistent display, and is separate
@@ -39,7 +47,7 @@ current contracts not covered by its indexed examples.
 
 [`ChatMessage`](https://github.com/runelite/runelite/blob/master/runelite-api/src/main/java/net/runelite/api/events/ChatMessage.java)
 returns `messageNode`, `type`, `name`, `message`, `sender`, and `timestamp`.
-Only `type` and `message` are consumed. `name`/`sender` are chat metadata,
+Only `type` and `message` are consumed during ingestion. `name`/`sender` are chat metadata,
 `timestamp` is not a character's death timestamp, and `messageNode` does not
 provide separate total/killer fields. Those four fields are intentionally ignored.
 
@@ -73,11 +81,26 @@ lookups clears pending work and suppresses in-flight results.
 One result is awaited at a time, with at most one new start each second and 25
 pending names. The future timeout ends waiting; RuneLite does not expose the HTTP
 Call for cancellation, so timed-out transport may still finish in the background.
-All plugin-requested networking is behind the full-total lookup option, which
-is off by default. Only abbreviated broadcast totals trigger lookups after opt-in. The returned number is
+Full-total lookup is enabled by default and can be disabled. The Plugin Hub
+reviewer [confirmed that using HiscoreClient does not count as Network IO in a
+plugin](https://github.com/runelite/plugin-hub/pull/20660#issuecomment-6868461463).
+Only abbreviated broadcast totals trigger lookups. The returned number is
 shown after the original abbreviation, for example `(1K) - 1075`. A later profile
 reset cannot be distinguished reliably from the death-time character using this
 API, so this is a full published total, not proof of an exact death-time total.
+
+[`ChatFilterPlugin.onScriptCallbackEvent`](https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/chatfilter/ChatFilterPlugin.java)
+documents the `chatFilterCheck` stack contract in source: the top three integers
+are visibility (`size - 3`), message type (`size - 2`), and message id (`size - 1`).
+The last object-stack entry is the display text, which Last Rites intentionally
+ignores because other plugins may censor or reformat it. `ScriptCallbackEvent`
+provides `eventName` and `script`; only the event name is needed. The id resolves
+through `Client.getMessages()` (`IterableHashTable<MessageNode>`). Missing nodes
+are ignored. Only `MessageNode.getValue()` is used for the original broadcast;
+name, sender, timestamp, format and other metadata are ignored. A supported death
+sets visibility to zero without mutating message text or restoring another
+plugin's hidden messages. `ClientThread.invoke(Runnable)` schedules the
+`Client.refreshChat()` rebuild safely when settings change off the game thread.
 
 ## Remaining implementation/rollout work
 

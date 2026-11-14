@@ -10,6 +10,11 @@ Achievement-style death announcements for Old School RuneScape's Hardcore Worlds
 - Move with **Alt + drag on Windows** or **Option + drag on Mac**. Hold the same
   key and drag an edge to resize. RuneLite remembers both size and position.
 - Scroll over the pop-up to browse up to 50 recent deaths.
+- **Hide death messages in chat** is on by default: recognised Hardcore Worlds
+  death broadcasts appear through Last Rites instead of filling chat. Turn it off
+  to show them in chat again, including messages still in the chat buffer.
+  Other chat and server announcements are unaffected. Popup visibility and death
+  exclusions still apply; hiding the popup does not restore the chat feed.
 - **Show on new deaths** controls whether live events can open it; a separate
   visible/hidden indicator shows its current state. Manually hiding turns that
   preference off. Timer expiry leaves it on. Samples override hiding temporarily.
@@ -18,14 +23,15 @@ Achievement-style death announcements for Old School RuneScape's Hardcore Worlds
 - Full integer broadcast totals are preserved. Abbreviated totals can be enriched
   through Jagex's **Hardcore Main** HiScores table. These values follow the original
   total, for example **Example (1K) - 1075**. The suffix comes from HiScores and
-  may lag or reflect a subsequent reset. **Full totals (network lookup)** is off
-  by default. Enable it to send broadcast player names to Jagex HiScores; turn it
-  off to use the broadcast alone. Unavailable lookups keep the broadcast.
+  may lag or reflect a subsequent reset. **Full totals from HiScores** is on
+  by default and uses RuneLite's HiScores client to look up broadcast player names.
+  Turn it off to use the broadcast alone. Unavailable lookups keep the broadcast.
 - Regex exclusions can match the original broadcast or named fields. Open the
   skull sidebar to save filters, view recent deaths, preview the pop-up, or find the Plugin Hub issue-reporting instructions.
 
-Version **0.0.1** is the first Plugin Hub submission; it is not available in the
-Hub until RuneLite reviews and merges the submission.
+Version **0.0.2** enables HiScores totals and chat death-feed replacement by
+default. The initial **0.0.1** Plugin Hub submission has merged; this update
+requires its own Plugin Hub review and merge before distribution.
 It recognises the verified broadcast formats documented in [the implementation
 notes](docs/IMPLEMENTATION.md). New Jagex formats are ignored until verified.
 
